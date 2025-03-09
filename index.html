@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fire Risk Prediction</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+      :root {
+        --gradient-from: #eff6ff;
+        --gradient-to: #e0e7ff;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        transition: background 0.5s ease;
+        padding: 1.5rem;
+      }
+
+      body.risk-low {
+        background: linear-gradient(to bottom right, #f0fdf4, #d1fae5);
+      }
+
+      body.risk-moderate {
+        background: linear-gradient(to bottom right, #fefce8, #fef3c7);
+      }
+
+      body.risk-high {
+        background: linear-gradient(to bottom right, #fff7ed, #fee2e2);
+      }
+
+      body.risk-extreme {
+        background: linear-gradient(to bottom right, #fef2f2, #ffe4e6);
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: fadeIn 0.5s ease forwards;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .title {
+        text-align: center;
+        color: #312e81;
+        font-size: 2.25rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+      }
+
+      .card {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 
+          0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: visible !important;
+      }
+
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0.1),
+          rgba(255, 255, 255, 0.2)
+        );
+        z-index: 0;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+      }
+
+      .card:hover::before {
+        opacity: 1;
+      }
+
+      .card > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .search-container {
+        position: relative;
+        z-index: 1000;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        background: white;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 
+          0 0 0 3px rgba(99, 102, 241, 0.2),
+          0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .search-results {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 0.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        box-shadow: 
+          0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 1001;
+      }
+
+      .search-result-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        background: white;
+        color: #1e293b;
+      }
+
+      .search-result-item:last-child {
+        border-bottom: none;
+      }
+
+      .search-result-item:hover {
+        background: rgba(99, 102, 241, 0.1);
+      }
+
+      .weather-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: slideUp 0.5s ease forwards;
+      }
+
+      @keyframes slideUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .weather-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        font-size: 1.125rem;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+      }
+
+      .weather-item:hover {
+        background: rgba(255, 255, 255, 0.7);
+        transform: translateX(5px);
+      }
+
+      .weather-icon {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+        opacity: 0.8;
+      }
+
+      .risk-level {
+        font-size: 1.75rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        transition: color 0.3s ease;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .risk-bar {
+        height: 0.625rem;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 9999px;
+        overflow: hidden;
+        margin: 1rem 0;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .risk-bar-fill {
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 0.5s ease, background-color 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .factors-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0;
+      }
+
+      .factors-list li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 0.5rem;
+        opacity: 0;
+        transform: translateX(-10px);
+        animation: slideIn 0.3s ease forwards;
+        transition: all 0.2s ease;
+      }
+
+      .factors-list li:hover {
+        background: rgba(255, 255, 255, 0.7);
+        transform: translateX(5px);
+      }
+
+      .factors-list li::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: #6366f1;
+        border-radius: 50%;
+        margin-right: 0.75rem;
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+      }
+
+      @keyframes slideIn {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .coordinates {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+      }
+
+      .coordinates:hover {
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      h2 {
+        color: #1e293b;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        position: relative;
+        padding-bottom: 0.5rem;
+      }
+
+      h2::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(to right, #6366f1, transparent);
+        border-radius: 3px;
+      }
+
+      .popular-cities {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem auto;
+        max-width: 1200px;
+        justify-items: center;
+      }
+
+      .city-card {
+        width: 100%;
+        max-width: 280px;
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        text-align: center;
+      }
+
+      .city-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+
+      .city-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #1e293b;
+      }
+
+      .city-info {
+        font-size: 0.875rem;
+        color: #64748b;
+      }
+
+      #map-container {
+        height: 500px;
+        width: 100%;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        margin-top: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .map-card {
+        grid-column: span 3;
+      }
+
+      @media (max-width: 1200px) {
+        .map-card {
+          grid-column: span 1;
+        }
+      }
+
+      .map-overlay {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        z-index: 1000;
+        bottom: 1rem;
+        right: 1rem;
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 3px solid rgba(99, 102, 241, 0.3);
+        border-radius: 50%;
+        border-top-color: #6366f1;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 768px) {
+        #map-container {
+          height: 400px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="title">Smart Weather & Fire Risk Monitor</h1>
+      
+      <div class="card">
+        <h2>Search for a City</h2>
+        <div class="search-container">
+          <input 
+            type="text" 
+            id="citySearch" 
+            class="search-input" 
+            placeholder="Start typing a city name..."
+          >
+          <div id="searchResults" class="search-results"></div>
+        </div>
+        <div id="coordinates" class="coordinates"></div>
+      </div>
+
+      <!-- Commented out high risk cities section
+      <div class="card">
+        <h2>High Fire Risk Cities</h2>
+        <div class="popular-cities" id="highRiskCities"></div>
+      </div>
+      -->
+
+      <div class="card">
+        <h2>Popular Cities</h2>
+        <div class="popular-cities" id="popularCities"></div>
+      </div>
+
+      <div id="weatherContainer" class="weather-grid hidden">
+        <div class="card">
+          <h2>Current Conditions</h2>
+          <div id="currentConditions"></div>
+        </div>
+
+        <div class="card">
+          <h2>Forecast Details</h2>
+          <div id="forecastDetails"></div>
+        </div>
+
+        <div class="card">
+          <h2>Fire Risk Assessment</h2>
+          <div id="fireRisk"></div>
+        </div>
+
+        <div class="card map-card">
+          <h2>Precipitation Map</h2>
+          <div id="map-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
