@@ -1,8 +1,8 @@
-# Smart Weather & Fire Risk Monitor 🌡️🔥
+# Smart Weather & Fire Risk Monitor 
 
 A sophisticated web application that provides real-time weather data and fire risk assessment using advanced weather analysis and machine learning predictions. The application leverages multiple weather APIs and TensorFlow.js to deliver accurate fire risk assessments.
 
-## 🌟 Features
+## Features
 
 - **Intelligent Search**: Smart city search with fuzzy matching and auto-completion
 - **Real-time Weather Data**: Live weather conditions including:
@@ -23,7 +23,7 @@ A sophisticated web application that provides real-time weather data and fire ri
   - Smooth animations and transitions
   - Intuitive user interface
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Frontend Framework**: Vanilla JavaScript with Vite
 - **APIs**:
@@ -38,7 +38,7 @@ A sophisticated web application that provides real-time weather data and fire ri
   - P-Queue for rate limiting
   - P-Retry for request retries
 
-## 📊 Fire Risk Assessment
+## Fire Risk Assessment
 
 The application calculates fire risk based on multiple factors:
 
@@ -54,7 +54,7 @@ Risk levels are categorized as:
 - 🟠 High (6-7)
 - 🔴 Extreme (8-10)
 
-## 🚀 Getting Started
+## Getting Started
 
 1. Clone the repository
 2. Install dependencies:
@@ -72,7 +72,7 @@ npm run dev
 npm run build
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ├── src/
@@ -97,6 +97,26 @@ npm run build
 - Grid-based location data
 - Comprehensive weather metrics
 
+## UI Features
+
+- Dynamic background gradients based on risk level
+- Animated transitions and loading states
+- Interactive weather cards
+- Responsive search interface
+- Real-time map updates
+
+
+## Browser Support
+
+- Chrome
+- Firefox
+- Safari
+- Edge
+
+## Mobile Support
+
+## InProgress: 
+
 ### OpenStreetMap
 - Geocoding services
 - Base map layers
@@ -107,38 +127,7 @@ npm run build
 - Radar visualization
 - Weather overlays
 
-## 🎨 UI Features
-
-- Dynamic background gradients based on risk level
-- Animated transitions and loading states
-- Interactive weather cards
-- Responsive search interface
-- Real-time map updates
-
-## 🔒 Rate Limiting
-
-The application implements sophisticated rate limiting:
-- Nominatim API: 1 request per 1.5 seconds
-- Weather.gov API: 1 request per second
-- Automatic request queuing
-- Built-in retry mechanism
-
-## 🌍 Browser Support
-
-- Chrome
-- Firefox
-- Safari
-- Edge
-- Other modern browsers with standard web API support
-
-## 📱 Mobile Support
-
-- Responsive design
-- Touch-friendly interface
-- Optimized performance
-- Adaptive layouts
-
-## 🔄 Future Enhancements
+## Server Integration
 
 - Machine learning model integration
 - Historical data analysis
