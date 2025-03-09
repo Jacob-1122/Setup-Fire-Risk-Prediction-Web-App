@@ -2,6 +2,8 @@
 
 A sophisticated web application that provides real-time weather data and fire risk assessment using advanced weather analysis and machine learning predictions. The application leverages multiple weather APIs and TensorFlow.js to deliver accurate fire risk assessments.
 
+## Hosted Site: https://meek-chimera-b4ac38.netlify.app
+
 ## Features
 
 - **Intelligent Search**: Smart city search with fuzzy matching and auto-completion
